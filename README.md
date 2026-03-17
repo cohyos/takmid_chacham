@@ -17,6 +17,20 @@ A browser-based AI agent that serves as a Torah scholar, powered by Gemini/Verte
 
 ## Architecture
 
+The project has two deployment modes:
+
+### Static (GitHub Pages) — `docs/`
+```
+Browser (HTML/CSS/JS)
+    ↕ Direct API calls
+    ↓
+┌──────────────────────┐  ┌──────────────────┐
+│ Gemini REST API      │  │ Sefaria REST API │
+│ (user provides key)  │  │ (6 tools, CORS)  │
+└──────────────────────┘  └──────────────────┘
+```
+
+### Full Server — `server.js`
 ```
 Browser (HTML/CSS/JS)
     ↕ NDJSON streaming
@@ -62,6 +76,17 @@ Gemini / Vertex AI
 **HebCal MCP**: Jewish holidays, Shabbat times, date conversion, zmanim, Torah readings
 
 ## Quick Start
+
+### Option 0: GitHub Pages (no server needed)
+
+A fully static version is available at **[cohyos.github.io/takmid_chacham](https://cohyos.github.io/takmid_chacham/)** — runs entirely in the browser with no backend.
+
+To deploy your own:
+1. Fork this repo
+2. Go to **Settings → Pages → Source**: select `Deploy from a branch`, branch `main`, folder `/docs`
+3. Get a free [Gemini API key](https://aistudio.google.com/apikey) and enter it in the UI
+
+The static version calls Gemini and Sefaria APIs directly from the browser (6 tools). For the full 15+ MCP tools, use the Node.js server below.
 
 ### Option A: Gemini API Key (simplest)
 
