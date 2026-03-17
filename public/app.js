@@ -141,7 +141,7 @@
               break;
 
             case 'tool_call':
-              addToolIndicator(event.name, event.args, false);
+              addToolIndicator(event.name, event.args, false, event.displayName);
               scrollToBottom();
               break;
 
@@ -216,17 +216,51 @@
     return el;
   }
 
+  // Tool display labels - supports both direct API and MCP tool names
   const TOOL_LABELS = {
+    // Direct API mode tools
     get_jewish_text: { icon: '📜', label: 'מביא טקסט' },
     get_commentaries: { icon: '📝', label: 'מביא פירושים' },
     search_jewish_library: { icon: '🔍', label: 'מחפש בספרייה' },
     get_learning_calendar: { icon: '🗓️', label: 'בודק לוח לימוד' },
     get_text_index: { icon: '📑', label: 'בודק מבנה ספר' },
-    get_related_texts: { icon: '🔗', label: 'מחפש מקורות קשורים' }
+    get_related_texts: { icon: '🔗', label: 'מחפש מקורות קשורים' },
+    // Sefaria MCP tools
+    sefaria__get_text: { icon: '📜', label: 'מביא טקסט' },
+    sefaria__text_search: { icon: '🔍', label: 'מחפש בספרייה' },
+    sefaria__english_semantic_search: { icon: '🔎', label: 'חיפוש סמנטי' },
+    sefaria__get_current_calendar: { icon: '🗓️', label: 'בודק לוח לימוד' },
+    sefaria__get_links_between_texts: { icon: '🔗', label: 'מחפש קשרים' },
+    sefaria__search_in_book: { icon: '📖', label: 'מחפש בספר' },
+    sefaria__search_in_dictionaries: { icon: '📚', label: 'מחפש במילון' },
+    sefaria__get_english_translations: { icon: '🌐', label: 'מביא תרגומים' },
+    sefaria__get_topic_details: { icon: '💡', label: 'מביא פרטי נושא' },
+    sefaria__clarify_name_argument: { icon: '✏️', label: 'מברר שם' },
+    sefaria__clarify_search_path_filter: { icon: '📋', label: 'מברר נתיב' },
+    sefaria__get_text_or_category_shape: { icon: '📐', label: 'בודק מבנה' },
+    sefaria__get_text_catalogue_info: { icon: '📑', label: 'מביא מידע ביבליוגרפי' },
+    sefaria__get_available_manuscripts: { icon: '📜', label: 'מחפש כתבי יד' },
+    sefaria__get_manuscript_image: { icon: '🖼️', label: 'מביא תמונת כתב יד' },
+    // HebCal MCP tools
+    hebcal__holidays: { icon: '🕎', label: 'חגים ומועדים' },
+    hebcal__shabbat: { icon: '🕯️', label: 'זמני שבת' },
+    hebcal__converter: { icon: '📅', label: 'המרת תאריך' },
+    hebcal__zmanim: { icon: '⏰', label: 'זמני היום' },
+    hebcal__leyning: { icon: '📜', label: 'קריאת התורה' },
   };
 
-  function addToolIndicator(toolName, args, done) {
-    const info = TOOL_LABELS[toolName] || { icon: '⚙️', label: toolName };
+  function getToolInfo(toolName, displayName) {
+    if (TOOL_LABELS[toolName]) return TOOL_LABELS[toolName];
+    // Fallback: derive from displayName or tool name
+    const isHebcal = toolName.startsWith('hebcal__');
+    const isSefaria = toolName.startsWith('sefaria__');
+    const icon = isHebcal ? '🗓️' : isSefaria ? '📖' : '⚙️';
+    const label = displayName || toolName.replace(/^(sefaria|hebcal)__/, '').replace(/_/g, ' ');
+    return { icon, label };
+  }
+
+  function addToolIndicator(toolName, args, done, displayName) {
+    const info = getToolInfo(toolName, displayName);
     const el = document.createElement('div');
     el.className = 'tool-indicator' + (done ? ' done' : '');
     el.dataset.tool = toolName;
@@ -236,6 +270,8 @@
       if (args.ref) detail = args.ref;
       else if (args.query) detail = args.query;
       else if (args.title) detail = args.title;
+      else if (args.text_ref) detail = args.text_ref;
+      else if (args.topic) detail = args.topic;
     }
 
     el.innerHTML = `

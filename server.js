@@ -1,6 +1,7 @@
 /**
  * Takmid Chacham - Express Server
  * Browser-based Talmid Chacham AI agent
+ * Connects to Sefaria & HebCal MCP servers for Jewish text access
  */
 
 const express = require('express');
@@ -59,16 +60,36 @@ function createAgent() {
     config.model = process.env.GEMINI_MODEL;
   }
 
+  // Custom MCP server URLs (optional overrides)
+  if (process.env.SEFARIA_MCP_URL || process.env.HEBCAL_MCP_URL) {
+    config.mcpServers = {};
+    if (process.env.SEFARIA_MCP_URL !== 'false') {
+      config.mcpServers.sefaria = {
+        url: process.env.SEFARIA_MCP_URL || 'https://mcp.sefaria.org/sse',
+        name: 'Sefaria',
+        description: 'Jewish texts library'
+      };
+    }
+    if (process.env.HEBCAL_MCP_URL !== 'false') {
+      config.mcpServers.hebcal = {
+        url: process.env.HEBCAL_MCP_URL || 'https://www.hebcal.com/mcp',
+        name: 'HebCal',
+        description: 'Jewish calendar'
+      };
+    }
+  }
+
   return new TalmidChachamAgent(config);
 }
 
 const agent = createAgent();
+let mcpStatus = null;
 
 // --- API Routes ---
 
 /**
  * POST /api/chat
- * Main chat endpoint - streams agent responses via Server-Sent Events style JSON
+ * Main chat endpoint - streams agent responses via NDJSON
  */
 app.post('/api/chat', async (req, res) => {
   const { message, sessionId } = req.body;
@@ -131,13 +152,16 @@ app.post('/api/reset', (req, res) => {
 
 /**
  * GET /api/health
- * Health check
+ * Health check with MCP connection status
  */
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    mode: agent.useVertexAI ? 'vertex-ai' : 'gemini-api',
-    model: agent.model
+    geminiMode: agent.useVertexAI ? 'vertex-ai' : 'gemini-api',
+    model: agent.model,
+    toolMode: agent.useMcp ? 'mcp' : 'direct-api',
+    toolCount: agent.useMcp ? agent.mcpManager.toolMap.size : 6,
+    mcp: mcpStatus
   });
 });
 
@@ -146,10 +170,36 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`\n  תקמיד חכם - Takmid Chacham`);
-  console.log(`  Running at http://localhost:${PORT}`);
-  console.log(`  Model: ${agent.model}`);
-  console.log();
+// --- Startup ---
+
+async function start() {
+  // Initialize MCP connections (with fallback to direct API)
+  mcpStatus = await agent.initialize();
+
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`\n  תקמיד חכם - Takmid Chacham`);
+    console.log(`  Running at http://localhost:${PORT}`);
+    console.log(`  Model: ${agent.model}`);
+    console.log(`  Tools: ${agent.useMcp ? 'MCP' : 'Direct Sefaria API'} (${agent.useMcp ? agent.mcpManager.toolMap.size : 6} tools)`);
+    console.log();
+  });
+}
+
+start().catch(err => {
+  console.error('Startup failed:', err);
+  process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('Shutting down...');
+  await agent.shutdown();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('Shutting down...');
+  await agent.shutdown();
+  process.exit(0);
 });
