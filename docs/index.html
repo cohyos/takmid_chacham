@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>תקמיד חכם - Takmid Chacham</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- API Key Setup (shown once) -->
+    <div id="setup-screen" class="setup-screen">
+      <div class="setup-card">
+        <h1 class="setup-logo">📖 תקמיד חכם</h1>
+        <p class="setup-subtitle">עוזר לימודי מבוסס בינה מלאכותית לטקסטים יהודיים</p>
+        <p class="setup-desc">
+          כדי להתחיל, הזן מפתח API של Google Gemini.
+          <br>
+          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">
+            קבל מפתח חינם מ-Google AI Studio &larr;
+          </a>
+        </p>
+        <form id="setup-form" class="setup-form">
+          <input
+            type="password"
+            id="api-key-input"
+            class="input-field"
+            placeholder="AIza..."
+            dir="ltr"
+            autocomplete="off"
+            required
+          >
+          <div class="setup-options">
+            <label class="checkbox-label">
+              <input type="checkbox" id="save-key" checked>
+              <span>שמור מפתח בדפדפן (localStorage)</span>
+            </label>
+            <label class="select-label">
+              <span>מודל:</span>
+              <select id="model-select" dir="ltr">
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash (מהיר)</option>
+                <option value="gemini-2.0-pro">Gemini 2.0 Pro (מתקדם)</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+              </select>
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary btn-large">התחל לימוד</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Main Chat Screen (hidden initially) -->
+    <div id="chat-screen" class="chat-screen hidden">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-content">
+          <h1 class="logo">📖 תקמיד חכם</h1>
+          <p class="subtitle">עוזר לימודי מבוסס Gemini + ספריא</p>
+        </div>
+        <div class="header-actions">
+          <button id="btn-calendar" class="btn btn-secondary" title="לימוד יומי">
+            🗓️ לוח לימוד
+          </button>
+          <button id="btn-reset" class="btn btn-secondary" title="שיחה חדשה">
+            🔄 שיחה חדשה
+          </button>
+          <button id="btn-settings" class="btn btn-secondary" title="הגדרות">
+            ⚙️
+          </button>
+        </div>
+      </header>
+
+      <!-- Chat Area -->
+      <main class="chat-container">
+        <div id="messages" class="messages">
+          <div class="message assistant-message">
+            <div class="message-avatar">📖</div>
+            <div class="message-content">
+              <p>שלום וברוכים הבאים! אני תקמיד חכם, עוזר לימודי לטקסטים יהודיים.</p>
+              <p>אני יכול לעזור לכם ב:</p>
+              <ul>
+                <li><strong>לימוד טקסטים</strong> - תנ"ך, משנה, תלמוד, הלכה, מדרש, קבלה</li>
+                <li><strong>פירושים</strong> - רש"י, תוספות, רמב"ן, אבן עזרא ועוד</li>
+                <li><strong>חיפוש נושאים</strong> - חיפוש במאגר ספריא</li>
+                <li><strong>לימוד יומי</strong> - דף יומי, פרשת השבוע, משנה יומית</li>
+              </ul>
+              <p>שאלו כל שאלה בעברית או באנגלית!</p>
+              <div class="quick-actions">
+                <button class="btn-quick" data-query="מה הדף היומי?">📚 דף יומי</button>
+                <button class="btn-quick" data-query="מה פרשת השבוע?">📜 פרשת השבוע</button>
+                <button class="btn-quick" data-query="הסבר לי את המשנה הראשונה במסכת ברכות">🕯️ ברכות א:א</button>
+                <button class="btn-quick" data-query='Explain the concept of "Tikkun Olam" with sources'>🌍 Tikkun Olam</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Input Area -->
+      <footer class="input-area">
+        <form id="chat-form" class="input-form">
+          <textarea
+            id="user-input"
+            class="input-field"
+            placeholder="שאלו שאלה בתורה, הלכה, תלמוד..."
+            rows="1"
+          ></textarea>
+          <button type="submit" id="btn-send" class="btn btn-primary" title="שלח">
+            <span class="send-icon">➤</span>
+          </button>
+        </form>
+        <div class="input-hint">
+          לדוגמה: "הסבר את בראשית א:א עם פירוש רש"י" | "What is the source for lighting Shabbat candles?"
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script src="sefaria-tools.js"></script>
+  <script src="agent.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
